@@ -103,6 +103,13 @@ function TestDemo(params)   //not "var state = function()" because first changeS
         {
             if (degreesSpeed < 10) degreesSpeed += 2;
         }
+		if (MyCanvas.isKeyReleased(MyCanvas.Keys.P))
+        {
+		    if(!audioTest.paused)
+                MyCanvas.stopAudio(audioTest);
+			else
+			    MyCanvas.playAudio(audioTest);
+        }
         degrees += degreesSpeed * MyCanvas.elapsedFactor; if (degrees >= 360) degrees -= 360; //elapsedFactor makes the rotation more smooth when a lag occurs
         //mouse/touch
         if (MyCanvas.interactionDown) 
