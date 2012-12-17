@@ -27,8 +27,7 @@ function TestDemo(params)   //not "var state = function()" because first changeS
 	function start()
     {
         if (params["keyboard"]) MyCanvas.initKeyboard(false); //'false' because it doesn't disable browser shortcuts
-        /*we must initialize both, it's not safe to choose the appropriate input method
-		after checking the running device*/
+        //we must initialize both, it's not safe to choose the appropriate input method after checking the running device
         MyCanvas.initMouseAndTouch(true);
 
         //high level images and texts (HighLevel.js)
