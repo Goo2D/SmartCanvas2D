@@ -26,20 +26,20 @@ function TestDemo(params)   //not "var state = function()" because first changeS
     MyCanvas.setStartFunction(
 	function start()
     {
-        if (params["keyboard"]) MyCanvas.initKeyboard(false); //it doesn't disable browser shortcuts
-		/*we must initialize both, it's not safe to choose the appropriate input method
+        if (params["keyboard"]) MyCanvas.initKeyboard(false); //'false' because it doesn't disable browser shortcuts
+        /*we must initialize both, it's not safe to choose the appropriate input method
 		after checking the running device*/
         MyCanvas.initMouseAndTouch(true);
 
-		//high level images and texts (HighLevel.js)
+        //high level images and texts (HighLevel.js)
         img = new Image2D("Assets/arrow.png", MyCanvas.width / 2, 300, beginImg); 
         txt = new Text2D("Textures test", MyCanvas.width / 2, 65, 'arial', 30, '#000000', true, 'normal');
         txt.fill = false; txt.strokeValue = 5;
         txt.alpha = 0.8;
-		//direct images
+        //direct images
         ghostTexture = MyCanvas.loadTexture("Assets/ghost.png", function () { bgPattern = MyCanvas.getPattern(bgTexture, 'repeat'); }); //the function is a callback after loading
         bgTexture = MyCanvas.loadTexture("Assets/texture.png", null);
-		//audio
+        //audio
         audioTest = MyCanvas.loadAudio("Assets/audio/audioDemo.m4a", true, false);      
         audioTest.volume = 1.0;
         audioTest.loop = true;
@@ -199,7 +199,7 @@ function TestDemo(params)   //not "var state = function()" because first changeS
         MyCanvas.fillPixelData(rectData, 0, 0);
         MyCanvas.fillRect(0, MyCanvas.height - 25, MyCanvas.width, 25, gradient);
 
-		//high level mode
+        //high level mode
         img.render();
         txt.render();
     }
