@@ -2,10 +2,10 @@
 
 MyCanvas.setSize(800, 500);
 MyCanvas.setFrameRate(30);      
-MyCanvas.changeState(test, { "keyboard": true });
+MyCanvas.changeState(test, { "keyboard": true }); //example param
 
 
-function test(params)   //not "var state = function()" because inside init function this would be not visible         
+function test(params)   //not "var state = function()" because first changeState function this would not be  visible         
 {
 
     var that = this;              
