@@ -1,0 +1,17 @@
+/** POWERED BY http://www.font2web.com/ **/
+
+/*Load all font formats to display them EVERYWHERE*/
+/*The '?' is used as the name of a font that cannot possibly exist (or is, at least, extremely unlikely) 
+so that a local font that happens to have the same name as the desired font will not be used.
+*/
+
+@font-face 
+{
+	font-family: 'TestFont';
+	src: url('Assets/fonts/Vanilla.eot');
+	src: local('?'), url('Assets/fonts/Vanilla.woff') format('woff'), url('Assets/fonts/Vanilla.ttf') format('truetype'), url('Assets/fonts/Vanilla.svg') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+
+
