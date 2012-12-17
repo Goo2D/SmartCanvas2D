@@ -145,21 +145,21 @@ function TestDemo(params)   //not "var state = function()" because first changeS
         //pattern
         MyCanvas.clearToColor(bgPattern);
         //draw textures
-        MyCanvas.fillTexture(ghostTexture, 150, 100);
-        MyCanvas.fillTextureRect(ghostTexture, 220, 110, 9, 10, 32, 26);
-        MyCanvas.fillScaledTexture(ghostTexture, 270, 120, 0.5, 0.5);
+        MyCanvas.fillTexture(ghostTexture, 155, 100);
+        MyCanvas.fillTextureRect(ghostTexture, 225, 110, 9, 10, 32, 26);
+        MyCanvas.fillScaledTexture(ghostTexture, 275, 120, 0.5, 0.5);
         MyCanvas.setAlpha(0.7);
-        MyCanvas.fillScaledTexture2(ghostTexture, 310, 80, ghostTexture.width * 1.5, ghostTexture.height * 1.5);
+        MyCanvas.fillScaledTexture2(ghostTexture, 315, 80, ghostTexture.width * 1.5, ghostTexture.height * 1.5);
         MyCanvas.setAlpha(1);
-        MyCanvas.fillRotatedTexture(ghostTexture, 410, 100, degrees);
+        MyCanvas.fillRotatedTexture(ghostTexture, 415, 100, degrees);
         //MyCanvas.fillRotatedTextureAround(ghostImage, 650, 100, 70, 1, 1);
-        MyCanvas.fillFlippedTexture(ghostTexture, 480, 100, false, true);
+        MyCanvas.fillFlippedTexture(ghostTexture, 495, 100, false, true);
         MyCanvas.fillTextureComplete(ghostTexture, 540, 100, 9, 10, 32, 26, 1.5, 1.5, true, false, 70, 0, 0);
         //primitives
         var fontString = MyCanvas.getFontString('sans-serif', 20, "normal");
-        MyCanvas.fillString("Left/right: change rotation speed" + MyCanvas.interactionX, MyCanvas.width / 2, MyCanvas.height / 2 - 40, fontString, '#ffffff', true);
+        MyCanvas.fillString("Left/right: change rotation speed", MyCanvas.width / 2, MyCanvas.height / 2 - 40, fontString, '#ffffff', true);
         fontString = MyCanvas.getFontString('sans-serif', 20, "italic");
-        MyCanvas.fillString("Click/Touch: change circle radius" + MyCanvas.interactionY, MyCanvas.width / 2, MyCanvas.height / 2 - 20, fontString, '#ffffff', true);
+        MyCanvas.fillString("Click/Touch: change circle radius", MyCanvas.width / 2, MyCanvas.height / 2 - 20, fontString, '#ffffff', true);
         fontString = MyCanvas.getFontString('TestFont', 20, ''); //custom font, '' == 'normal'
         MyCanvas.fillString("Smart Canvas 2D test demo", MyCanvas.width / 2, MyCanvas.height / 2 + 7, fontString, '#ffffff', true); 
 
