@@ -2,10 +2,10 @@
 
 MyCanvas.setSize(800, 500);
 MyCanvas.setFrameRate(30);      
-MyCanvas.changeState(test, { "keyboard": true }); //example param
+MyCanvas.changeState(TestDemo, { "keyboard": true }); //example param
 
 
-function test(params)   //not "var state = function()" because first changeState function this would not be  visible         
+function TestDemo(params)   //not "var state = function()" because first changeState function this would not be  visible         
 {
 
     var that = this;              
@@ -23,14 +23,14 @@ function test(params)   //not "var state = function()" because first changeState
     var txt = null; //Text2D
 
     //start function
-    MyCanvas.setStartFunction(function start()
+    MyCanvas.setStartFunction(
+	function start()
     {
         if (params["keyboard"])
             MyCanvas.initKeyboard(false); //it doesn't disable browser shortcuts
-        //this function only detects common devices (ipad/pod iphone, android, windows phone etc etc) so be careful.
-        if (!MyCanvas.runningOnMobileDevice())
-            MyCanvas.initMouse(true);
-        MyCanvas.initTouch(true); //init always touch because the app could run on an unknow mobile device. (don't use 'MyCanvas.runningOnTouchMobileDevice')
+		//we must initialize both, it's not safe to choose the appropriate input method 
+		//after checking the running device
+        MyCanvas.initMouseAndTouch(true);
 
         img = new Image2D("Assets/arrow.png", MyCanvas.width / 2, 300, beginImg);
         txt = new Text2D("Textures test", MyCanvas.width / 2, 65, 'arial', 30, '#000000', true, 'normal');
@@ -61,7 +61,7 @@ function test(params)   //not "var state = function()" because first changeState
         MyCanvas.setPreloaderFunction(that.preloader);
         //the canvas can't handle the loading of custom fonts so the loading time should be increased to minimize the possibility that a custom font will load
         //after the application start.
-        MyCanvas.fakePreloadTimer = 1; //1 extra second
+        MyCanvas.fakePreloadTimer = 1; //(seconds)
     });
     
     //Body function, executed every frame
@@ -97,47 +97,44 @@ function test(params)   //not "var state = function()" because first changeState
         //keyboard
         if (MyCanvas.isKeyPressed(MyCanvas.Keys.LEFT))
         { 
-            if (degreesSpeed >= 2) degreesSpeed -= 2;
+            if (degreesSpeed > 2) degreesSpeed -= 2;
         }
         else if (MyCanvas.isKeyPressed(MyCanvas.Keys.RIGHT))
         {
-            if (degreesSpeed <= 10) degreesSpeed += 2;
+            if (degreesSpeed < 10) degreesSpeed += 2;
         }
         degrees += degreesSpeed * MyCanvas.elapsedFactor; if (degrees >= 360) degrees -= 360; //elapsedFactor makes the rotation more smooth when a lag occurs
         //mouse/touch
-        if (MyCanvas.isMouseOrTouchDown()) // otherwise faster 'MyCanvas.mouseDownButton != MyCanvas.MouseButtons.NO_PRESSED'
+        if (MyCanvas.interactionDown) 
         {
             var n = 2 * MyCanvas.elapsedFactor;
-            if (MyCanvas.isMouseEnabled())
+            //mouse specific (detect mouse trick)
+            if (MyCanvas.mouseButtonsPressed.length == 1) //avoid also changes when pressing left/right at the same time
             {
-                if (MyCanvas.mouseButtonsPressed.length == 1)
+                if (MyCanvas.mouseDownButton == MyCanvas.MouseButtons.LEFT)
                 {
-                    if (MyCanvas.mouseDownButton == MyCanvas.MouseButtons.LEFT)
-                    {
-                        if (circleRadius < 60)
-                        {
-                            circleRadius += n;
-                            if (circleRadius > 60) circleRadius = 60;
+                    if (circleRadius < 60) {
+                        circleRadius += n;
+                        if (circleRadius > 60) circleRadius = 60;
 
-                        }    
                     }
-                    else if (MyCanvas.mouseDownButton == MyCanvas.MouseButtons.RIGHT)
-                    { 
-                        if (circleRadius > 20)
-                        {
-                            circleRadius -= n;
-                            if (circleRadius < 20) circleRadius = 20;
-                        }  
+                }
+                else if (MyCanvas.mouseDownButton == MyCanvas.MouseButtons.RIGHT) {
+
+                    if (circleRadius > 20) {
+                        circleRadius -= n;
+                        if (circleRadius < 20) circleRadius = 20;
                     }
                 }
             }
-            if (MyCanvas.isTouchEnabled() && MyCanvas.touchDown) //else is not safe
+            //touch specific (detect touch trick)
+            else if (MyCanvas.touchesList.length > 0)
             {
                 if (circleRadius < 60)
                 {
                     circleRadius += n;
                     if (circleRadius > 60) circleRadius = 60;
-                }                  
+                }
             }
         }
         
@@ -160,9 +157,9 @@ function test(params)   //not "var state = function()" because first changeState
         MyCanvas.fillTextureComplete(ghostTexture, 540, 100, 9, 10, 32, 26, 1.5, 1.5, true, false, 70, 0, 0);
         //primitives
         var fontString = MyCanvas.getFontString('sans-serif', 20, "normal");
-        MyCanvas.fillString("Left/right: change rotation speed", MyCanvas.width / 2, MyCanvas.height / 2 - 40, fontString, '#ffffff', true);
+        MyCanvas.fillString("Left/right: change rotation speed" + MyCanvas.interactionX, MyCanvas.width / 2, MyCanvas.height / 2 - 40, fontString, '#ffffff', true);
         fontString = MyCanvas.getFontString('sans-serif', 20, "italic");
-        MyCanvas.fillString("Click/Touch: change circle radius" + MyCanvas.touchY, MyCanvas.width / 2, MyCanvas.height / 2 - 20, fontString, '#ffffff', true);
+        MyCanvas.fillString("Click/Touch: change circle radius" + MyCanvas.interactionY, MyCanvas.width / 2, MyCanvas.height / 2 - 20, fontString, '#ffffff', true);
         fontString = MyCanvas.getFontString('TestFont', 20, ''); //custom font, '' == 'normal'
         MyCanvas.fillString("Smart Canvas 2D test demo", MyCanvas.width / 2, MyCanvas.height / 2 + 7, fontString, '#ffffff', true); 
 

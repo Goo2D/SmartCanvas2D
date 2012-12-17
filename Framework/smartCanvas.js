@@ -6,7 +6,7 @@ var MyCanvas = new function () //singleton
 {
 
     var that = this;
-    var VERSION = "0.52";
+    var VERSION = "0.55";
 
     //canvas stuff
     that.width = 700;
@@ -38,46 +38,34 @@ var MyCanvas = new function () //singleton
     that.imagesToPreload = 0;
     that.musicsToPreload = 0;
     that.musicsLoaded = 0;
-    //device stuff
-    var device = navigator.userAgent.toLowerCase();
-    var touchDevice = checkDevice(["iphone", "ipad", "ipod", "android", "touch", "windows phone", "kindle"]);
-    var mobileDevice = touchDevice || checkDevice(["blackberry", "opera mini", "symbian", "mobile", "smartphone"]);
-    that.runningOnMobileDevice = function() { return mobileDevice; } //not reliable, be careful
-    that.runningOnMobileTouchDevice = function () { return touchDevice; } //not reliable, be careful
-    function checkDevice(options)
-    {
-        for(var i = 0; i< options.length; i++)
-        {
-            if (device.indexOf(options[i]) != -1) return true;
-        }
-        return false;
-    }
-    //input
+    //keyboard input
     var keysDown;
     var keysPressed;
     var keysReleased;
+    //mouse
     that.mouseDownButton; //last mouse button down
     that.mousePressedButton; //last mouse button pressed
     that.mouseReleasedButton; //last mouse button released
     that.mouseButtonsPressed; //array of mouse buttons pressed
-    that.mouseX;
-    that.mouseY;
-    that.touchX;
-    that.touchY;
-    that.touchDown; //last mouse button down
-    that.touchPressed; //last mouse button pressed
-    that.touchReleased //last mouse button released
+    var initMousePos; //the first time it sets the mouse position. (The user can click without having moved the mouse before)
+    //mouse/touch
+    that.interactionX; //mouse/touch X
+    that.interactionY; //mouse/touch Y
+    that.interactionDown; //is mouse/touch down
+    that.interactionPressed; //is mouse/touch down pressed
+    that.interactionReleased //is mouse/touch down released
+    //touch input
     that.allowTouchOffscreen; //when touch is down if true the touch position can go offscreen ( < 0 or > width/height)
-    var multiTouchPositions; //array with touch positions
-    that.getTouchPositions = function () { return multiTouchPositions;}
+    that.touchesList; //array with touch positions (multiTouch)
     var SingleTouchPosition; //class that represents a touch position (defined inside initTouch method)
-    var initMousePos; //the first time it sets the mouse position also in touchDown event. (The user can click without having moved the mouse before)
+    //general input
     var keyboardActive = false;
     var mouseActive = false;
     var touchActive = false;
     that.isMouseEnabled = function () { return mouseActive; }
     that.isKeyboardEnabled = function () { return keyboardActive; }
     that.isTouchEnabled = function () { return touchActive; }
+    that.isMouseOrTouchEnabled = function () { return mouseActive || touchActive; }
 
     //state stuff
     var nextState = null;
@@ -542,26 +530,22 @@ var MyCanvas = new function () //singleton
         return false;
     }
 
-    var handleKeyPress = function (ev) //not called
-    {
-        
-    }
-
-   var handleKeyDown = function (ev)
+   var event_keyDown = function (ev)
    {
-       /*this event is too instable so the input process is a little bit complex.
-       keydown is acquired only at the first press (the key goes in keysPressed list) and after a game loop the key goes into
-       keysDown list. the keyUp event removes the key from the list*/
+       /*this event is too instable so the input process is a little bit uncommon.
+       the key is acquired only at the first press and then it goes in keysPressed and keydown lists
+       the keyPressed list is cleared every frame and the keyUp event removes the key from the keyDown list */
        var index = keysDown.indexOf(ev.keyCode);
        if (index == -1)
        {
-             keysPressed.push(ev.keyCode);
+           keysPressed.push(ev.keyCode);
+           keysDown.push(ev.keyCode);
        }
        if (that.preventDefaultKeys)
            preventDefault(ev);
     }
 
-    var handleKeyUp = function (ev)
+    var event_keyUp = function (ev)
     {
         keysReleased.push(ev.keyCode);
         var index = keysDown.indexOf(ev.keyCode);
@@ -577,9 +561,8 @@ var MyCanvas = new function () //singleton
     that.Keys = null; //keys enum (init in initKeyboard)
     that.MouseButtons = null; //mouse buttons enum (init in initMouse)
 
-   that.stopPropagation = function (event) //useless since this framework doesn't use the javascript native event process. 
+   var stopPropagation = function (event) //after this  listeners no longer receive this input event.
    {
-        //Anyway after this function listeners no longer receive the input event.
         if (event.stopPropagation) event.stopPropagation();
    }
    var preventDefault = function(event) //it prevents default input behaviour of the browser
@@ -587,26 +570,26 @@ var MyCanvas = new function () //singleton
        if (event.preventDefault) event.preventDefault();
    }
 
-   var ev_touchdown = function (ev)
+   var event_touchdown = function (ev)
    {
-       that.touchDown = true;
+       that.interactionDown = true;
        updateTouchPos(ev, true, !that.allowTouchOffscreen);
        if (that.preventDefaultTouch)
            preventDefault(ev);
    }
-   var ev_touchup = function (ev)
+   var event_touchup = function (ev)
    {
-       if (ev.touches.length < multiTouchPositions.length)
+       if (ev.touches.length < that.touchesList.length)
        {
-           multiTouchPositions.splice(ev.touches.length, multiTouchPositions.length - ev.touches.length);
-           that.touchReleased = true;
-           if (ev.touches.length == 0) that.touchDown = false;
+           that.touchesList.splice(ev.touches.length, that.touchesList.length - ev.touches.length);
+           that.interactionReleased = true;
+           if (ev.touches.length == 0) that.interactionDown = false;
        }
        updateTouchPos(ev, false);
        if (that.preventDefaultTouch)
            preventDefault(ev);
    }
-   var ev_touchmove = function (ev)
+   var event_touchmove = function (ev)
    {
        updateTouchPos(ev, true, !that.allowTouchOffscreen);
        if (that.preventDefaultTouch && !that.touchScrolling)
@@ -621,82 +604,87 @@ var MyCanvas = new function () //singleton
             {
                var tX = ev.touches[i].pageX - that.value.offsetLeft;
                var tY = ev.touches[i].pageY - that.value.offsetTop;
-               if (i >= multiTouchPositions.length) //new touch pos
+               if (i >= that.touchesList.length) //new touch pos
                {
                    //touchMove checks new positions because if a finger is offscreen and returns inside it there will be a new pos.
                    if (!checkOffscreen || (tX >= 0 && tX <= that.width && tY >= 0 && tY <= that.height))
                    {
                        if (that.audioOnInteraction != null) that.playAudio(that.audioOnInteraction); //iphone/ipad support
-                       that.touchPressed = true;
-                       multiTouchPositions.push(new SingleTouchPosition(tX, tY));
+                       that.interactionPressed = true;
+                       that.touchesList.push(new SingleTouchPosition(tX, tY));
                    }
                    continue;
                }   
                if (checkOffscreen && (tX < 0 || tX > that.width || tY < 0 || tY > that.height))
                {
-                   multiTouchPositions.splice(i, 1);
+                   that.touchesList.splice(i, 1);
                }
                else
                {
-                   multiTouchPositions[i].x = tX;
-                   multiTouchPositions[i].y = tY;
+                   that.touchesList[i].x = tX;
+                   that.touchesList[i].y = tY;
                }         
             } 
        }
        //update main touch pos
-       if (multiTouchPositions.length > 0)
+       if (that.touchesList.length > 0)
        {
-           that.touchX = multiTouchPositions[multiTouchPositions.length - 1].x;
-           that.touchY = multiTouchPositions[multiTouchPositions.length - 1].y;
+           that.interactionX = that.touchesList[that.touchesList.length - 1].x;
+           that.interactionY = that.touchesList[that.touchesList.length - 1].y;
        }
    }
 
 
 
-   var ev_mouseup = function (ev)
+   var event_mouseup = function (ev)
    {
+       var button = ev.which;
        //remove to mouse buttons pressed list
-       var index = that.mouseButtonsPressed.indexOf(ev.which);
+       var index = that.mouseButtonsPressed.indexOf(button);
        if (index != -1) that.mouseButtonsPressed.splice(index, 1);
        if (that.mouseButtonsPressed.length == 0)
        {
            that.mouseDownButton = that.MouseButtons.NO_PRESSED;
+           that.interactionDown = false;
        }
        else
        {
            that.mouseDownButton = that.mouseButtonsPressed[0];
+           that.interactionDown = true; 
        }
        that.mousePressedButton = that.MouseButtons.NO_PRESSED;
-       that.mouseReleasedButton = ev.which;
+       that.interactionPressed = false;
+       that.mouseReleasedButton = button;
+       that.interactionReleased = true;
        if (that.preventDefaultMouse)
            preventDefault(ev);
    }
 
 
-   var ev_mousedown = function (ev)
+   var event_mousedown = function (ev)
    {
+       var button = ev.which;
        if (initMousePos)
        {
            updateMousePos(ev);
            initMousePos = false;
        }
        //add to mouse buttons pressed list
-       var index = that.mouseButtonsPressed.indexOf(ev.which);
+       var index = that.mouseButtonsPressed.indexOf(button);
        if (index == -1) //new mouse button pressed
        {
            if (that.audioOnInteraction != null) that.playAudio(that.audioOnInteraction); //iphone/ipad support
-           that.mouseButtonsPressed.push(ev.which);
-           that.mousePressedButton = ev.which;
+           that.mouseButtonsPressed.push(button);
+           that.mousePressedButton = button; that.mouseDownButton = that.mousePressedButton;
+           that.interactionPressed = true; that.interactionDown = true;
        }
        if (that.preventDefaultMouse)
            preventDefault(ev);
    }
 
-   var ev_mousemove = function (ev)
+   var event_mousemove = function (ev)
    {
        updateMousePos(ev);
-       //if (that.preventDefaultMouse)
-            //preventDefault(ev);
    }
 
    function updateMousePos(ev)
@@ -704,14 +692,14 @@ var MyCanvas = new function () //singleton
        //different browsers
        if (ev.pageX || ev.pageY)
        {
-           that.mouseX = ev.pageX - that.value.offsetLeft;
-           that.mouseY = ev.pageY - that.value.offsetTop;
+           that.interactionX = ev.pageX - that.value.offsetLeft;
+           that.interactionY = ev.pageY - that.value.offsetTop;
        }
        if (ev.clientX || ev.clientY)
        {
-           that.mouseX = ev.clientX + document.body.scrollLeft
+           that.interactionX = ev.clientX + document.body.scrollLeft
                + document.documentElement.scrollLeft - that.value.offsetLeft;
-           that.mouseY = ev.clientY + document.body.scrollTop
+           that.interactionY = ev.clientY + document.body.scrollTop
                + document.documentElement.scrollTop - that.value.offsetTop;
        }
         
@@ -722,9 +710,13 @@ var MyCanvas = new function () //singleton
         that.mouseDownButton = that.MouseButtons.NO_PRESSED;
         that.mousePressedButton = that.MouseButtons.NO_PRESSED;
         that.mouseReleasedButton = that.MouseButtons.NO_PRESSED;
-        that.mouseX = 0;
-        that.mouseY = 0;
         that.mouseButtonsPressed.splice(0, that.mouseButtonsPressed.length);
+        //general
+        that.interactionX = 0;
+        that.interactionY = 0;
+        that.interactionDown = false;
+        that.interactionPressed = false;
+        that.interactionReleased = false;  
     }
     that.isMouseDown = function () { return that.mouseDownButton != that.MouseButtons.NO_PRESSED; }
     that.isMousePressed = function () { return that.mousePressedButton != that.MouseButtons.NO_PRESSED; }
@@ -733,7 +725,7 @@ var MyCanvas = new function () //singleton
     that.isMouseOrTouchPressed = function () { return (mouseActive && that.mousePressedButton != that.MouseButtons.NO_PRESSED) || (touchActive && that.touchPressed); }
     that.isMouseOrTouchReleased = function () { return (mouseActive && that.mouseReleasedButton != that.MouseButtons.NO_PRESSED) || (touchActive && that.touchReleased); }
 
-    that.initMouse = function (preventDefault) //default browser behaviours
+    var initMouse = function (preventDefault) //default browser behaviours
     {
         if (mouseActive) return;
         that.mouseButtonsPressed = new Array();
@@ -751,12 +743,12 @@ var MyCanvas = new function () //singleton
         initMousePos = true;
         that.preventDefaultMouse = preventDefault;
         //listeners
-        that.value.addEventListener('mousedown', ev_mousedown, true);
-        that.value.addEventListener('mouseup', ev_mouseup, true);
-        that.value.addEventListener('mousemove', ev_mousemove, true);
+        that.value.addEventListener('mousedown', event_mousedown, true);
+        that.value.addEventListener('mouseup', event_mouseup, true);
+        that.value.addEventListener('mousemove', event_mousemove, true);
     }
 
-    that.endMouse = function ()
+    var endMouse = function ()
     {
         if (!mouseActive) return;
         mouseActive = false;
@@ -764,51 +756,63 @@ var MyCanvas = new function () //singleton
         that.mouseButtonsPressed = null;
         that.preventDefaultMouse = null;
         that.mouseButtons = null;
-        that.value.removeEventListener('mousedown', ev_mousedown, true);
-        that.value.removeEventListener('mouseup', ev_mouseup, true);
-        that.value.removeEventListener('mousemove', ev_mousemove, true);
+        that.value.removeEventListener('mousedown', event_mousedown, true);
+        that.value.removeEventListener('mouseup', event_mouseup, true);
+        that.value.removeEventListener('mousemove', event_mousemove, true);
     }
 
 
     var resetTouch = function()
     {
-        that.touchX = 0;
-        that.touchY = 0;
-        that.touchDown = false;
-        that.touchUp = false;
-        that.touchReleased = false;
-        multiTouchPositions.splice(0, multiTouchPositions.length);
+        that.touchesList.splice(0, that.touchesList.length);
+        //general
+        that.interactionX = 0;
+        that.interactionY = 0;
+        that.interactionDown = false;
+        that.interactionPressed = false;
+        that.interactionReleased = false;
     }
 
-    that.initTouch = function(preventDefault, touchScrollingEnabled) //default browser behaviours
+    var initTouch = function(preventDefault, touchScrollingEnabled) //default browser behaviours
     {
         if (touchActive) return;
         touchActive = true; 
         SingleTouchPosition = function (x, y) { var that = this; that.x = x; that.y = y; }
-        multiTouchPositions = new Array(); //array of SingleTouchPosition for handling multiTouch
+        that.touchesList = new Array(); //array of SingleTouchPosition for handling multiTouch
         resetTouch();
         that.allowTouchOffscreen = false;
         that.touchScrolling = false;
         if (touchScrollingEnabled)
             that.touchScrolling = true;         
         that.preventDefaultTouch = preventDefault;
-        that.value.addEventListener('touchstart', ev_touchdown, true);
-        that.value.addEventListener('touchend', ev_touchup, true);
-        that.value.addEventListener('touchcancel', ev_touchup, true);
-        that.value.addEventListener('touchmove', ev_touchmove, true);
+        that.value.addEventListener('touchstart', event_touchdown, true);
+        that.value.addEventListener('touchend', event_touchup, true);
+        that.value.addEventListener('touchcancel', event_touchup, true);
+        that.value.addEventListener('touchmove', event_touchmove, true);
     }
-    that.endTouch = function ()
+    var endTouch = function ()
     {
         if (!touchActive) return;
         touchActive = false;
         resetTouch();
-        multiTouchPositions = null;
+        that.touchesList = null;
         that.preventDefaultTouch = null;
         SingleTouchPosition = null;
-        that.value.removeEventListener('touchstart', ev_touchdown, true);
-        that.value.removeEventListener('touchend', ev_touchup, true);
-        that.value.removeEventListener('touchcancel', ev_touchup, true);
-        that.value.removeEventListener('touchmove', ev_touchmove, true);
+        that.value.removeEventListener('touchstart', event_touchdown, true);
+        that.value.removeEventListener('touchend', event_touchup, true);
+        that.value.removeEventListener('touchcancel', event_touchup, true);
+        that.value.removeEventListener('touchmove', event_touchmove, true);
+    }
+
+    that.initMouseAndTouch = function (preventDefault, touchScrollingEnabled) 
+    {
+        initMouse(preventDefault);
+        initTouch(preventDefault, touchScrollingEnabled);
+    }
+    that.endMouseAndTouch = function ()
+    {
+        endMouse();
+        endTouch();
     }
 
     that.initKeyboard = function (preventDefault)
@@ -926,9 +930,9 @@ var MyCanvas = new function () //singleton
             */
         }
         //listeners
-        document.addEventListener('keydown', handleKeyDown, true); //adding on canvas not working
-        //window.addEventListener('keypress', handleKeyPress, true);
-        document.addEventListener('keyup', handleKeyUp, true);
+        document.addEventListener('keydown', event_keyDown, true); //adding on canvas not working
+        //window.addEventListener('keypress', event_keyPress, true);
+        document.addEventListener('keyup', event_keyUp, true);
     }
     that.endKeyboard = function ()
     {
@@ -937,9 +941,9 @@ var MyCanvas = new function () //singleton
         that.preventDefaultKeys = null;
         that.keys = null;
         clearKeyboardInputLists();
-        document.removeEventListener('keydown', handleKeyDown, true);
-        //window.removeEventListener('keypress', handleKeyPress, true);
-        document.removeEventListener('keyup', handleKeyUp, true);
+        document.removeEventListener('keydown', event_keyDown, true);
+        //window.removeEventListener('keypress', event_keyPress, true);
+        document.removeEventListener('keyup', event_keyUp, true);
     }
 
     var clearKeyboardInputLists = function ()
@@ -1165,15 +1169,6 @@ var MyCanvas = new function () //singleton
         that.elapsedFactor = Math.round((that.elapsed * FR) * 10) / 10; //rounded to first decimal
         if (that.elapsedFactor > 2) that.elapsedFactor = 2; //max value
         lastTime = now;
-        if (keyboardActive)
-        {
-            //input (a keyPressed after a game loop becomes a keyDown if it's still pressed ( == keyUp not called yet))
-            for (var i = 0; i < keysPressed.length; i++) { keysDown.push(keysPressed[i]); } //goto keydown event for the explanation
-        }
-        if (mouseActive)
-        {
-            if (that.mousePressedButton != that.MouseButtons.NO_PRESSED) that.mouseDownButton = that.mousePressedButton;
-        }
         //clear screed
         that.clear();
         //loop
@@ -1217,15 +1212,15 @@ var MyCanvas = new function () //singleton
             keysReleased.splice(0, keysReleased.length);
             keysPressed.splice(0, keysPressed.length);
         }
-        if (mouseActive)
+        if(touchActive || mouseActive)
         {
-            that.mousePressedButton = that.MouseButtons.NO_PRESSED;
-            that.mouseReleasedButton = that.MouseButtons.NO_PRESSED;
-        }
-        if(touchActive)
-        {
-            that.touchReleased = false;
-            that.touchPressed = false;
+            that.interactionReleased = false;
+            that.interactionPressed = false;
+            if (mouseActive)
+            {
+                that.mousePressedButton = that.MouseButtons.NO_PRESSED;
+                that.mouseReleasedButton = that.MouseButtons.NO_PRESSED;
+            }
         }
     }
 
