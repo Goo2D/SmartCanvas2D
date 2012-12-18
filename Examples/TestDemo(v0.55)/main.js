@@ -30,7 +30,7 @@ function TestDemo(params)
         //we must initialize both, it's not safe to choose the appropriate input method after checking the running device
         MyCanvas.initMouseAndTouch(true);
 
-	    //high level images and texts (HighLevel.js)
+        //high level images and texts (HighLevel.js)
         img = new Image2D("Assets/arrow.png", MyCanvas.width / 2, 300, function ()
         {
             //after loading
@@ -119,7 +119,8 @@ function TestDemo(params)
             {
                 if (MyCanvas.mouseDownButton == MyCanvas.MouseButtons.LEFT)
                 {
-                    if (circleRadius < 60) {
+                    if (circleRadius < 60)
+                    {
                         circleRadius += n;
                         if (circleRadius > 60) circleRadius = 60;
 
@@ -128,7 +129,8 @@ function TestDemo(params)
                 else if (MyCanvas.mouseDownButton == MyCanvas.MouseButtons.RIGHT)
                 {
 
-                    if (circleRadius > 20) {
+                    if (circleRadius > 20)
+                    {
                         circleRadius -= n;
                         if (circleRadius < 20) circleRadius = 20;
                     }
