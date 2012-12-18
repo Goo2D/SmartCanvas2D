@@ -67,7 +67,7 @@ function TestDemo(params)
         MyCanvas.setPreloaderFunction(that.preloader);
         //the canvas can't handle the loading of custom fonts so the loading time should be increased to minimize the possibility that a custom font will load
         //after the application start.
-        MyCanvas.fakePreloadTimer = 1.5; //(seconds)
+        MyCanvas.fakePreloadTimer = 1; //(seconds)
     });
     
     //Body function, executed every frame
