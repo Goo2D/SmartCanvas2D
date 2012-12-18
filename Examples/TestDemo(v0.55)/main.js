@@ -104,7 +104,7 @@ function TestDemo(params)
         {
             if (degreesSpeed < 10) degreesSpeed += 2;
         }
-		if (MyCanvas.isKeyReleased(MyCanvas.Keys.P))
+        if (MyCanvas.isKeyReleased(MyCanvas.Keys.P))
         {
 		    if(!audioTest.paused)
                 MyCanvas.stopAudio(audioTest);
@@ -127,7 +127,8 @@ function TestDemo(params)
 
                     }
                 }
-                else if (MyCanvas.mouseDownButton == MyCanvas.MouseButtons.RIGHT) {
+                else if (MyCanvas.mouseDownButton == MyCanvas.MouseButtons.RIGHT)
+                {
 
                     if (circleRadius > 20) {
                         circleRadius -= n;
