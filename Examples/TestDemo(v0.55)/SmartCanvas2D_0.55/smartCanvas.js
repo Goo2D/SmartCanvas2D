@@ -1263,12 +1263,13 @@ var MyCanvas = new function () //singleton
     }
 
 
-    //salvataggio
-    that.itemExist = function (value) {
-        try {
+    //SAVE/LOAD 
+    that.itemExist = function (value)
+    {
+        try
+        {
             if (localStorage.getItem(value) != null)
                 return true;
-
             return false;
         }
         catch (e) {
@@ -1276,16 +1277,14 @@ var MyCanvas = new function () //singleton
         }
 
     }
-
-
-
-    //SAVE/LOAD
     that.clearSaveData = function ()
     {
-        try {
+        try
+        {
             localStorage.clear();
         }
-        catch (e) {
+        catch (e)
+        {
 
         }
     }
@@ -1295,8 +1294,9 @@ var MyCanvas = new function () //singleton
         {
             localStorage.setItem(value, vr);
         }
-        catch (e) {
-            that.msg("Save error");
+        catch (e)
+        {
+            that.showMessage("Save error");
         }
     }
 
