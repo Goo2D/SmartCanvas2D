@@ -44,7 +44,7 @@ function TestDemo(params)
         ghostTexture = MyCanvas.loadTexture("Assets/ghost.png", function () { bgPattern = MyCanvas.getPattern(bgTexture, 'repeat'); }); 
         bgTexture = MyCanvas.loadTexture("Assets/texture.png", null);
         //audio
-        audioTest = MyCanvas.loadAudio("Assets/audio/audioDemo.m4a", false, false);      
+        audioTest = MyCanvas.loadAudio("Assets/audio/audioDemo.m4a", true, false);      
         audioTest.volume = 1.0;
         audioTest.loop = true;
         //gradient
