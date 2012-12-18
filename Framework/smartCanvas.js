@@ -6,7 +6,7 @@ var MyCanvas = new function () //singleton
 {
 
     var that = this;
-    var VERSION = "0.55";
+    var VERSION = "0.56";
 
     //canvas stuff
     that.width = 700;
@@ -38,6 +38,7 @@ var MyCanvas = new function () //singleton
     that.imagesToPreload = 0;
     that.musicsToPreload = 0;
     that.musicsLoaded = 0;
+    var localStorageSupport = localStorageIsSupported();
     //keyboard input
     var keysDown;
     var keysPressed;
@@ -1262,6 +1263,57 @@ var MyCanvas = new function () //singleton
         startFunction = startF;
     }
 
+
+    //SAVE/LOAD 
+    function localStorageIsSupported()
+    {
+        try
+        {
+            return 'localStorage' in window && window['localStorage'] !== null;
+        }
+        catch (e)
+        {
+            return false;
+        }
+    }
+    that.checkItem = function (key)
+    {
+        if (!localStorageSupport || !localStorage.getItem(key)) return false;
+        return true;
+    }
+    that.clearSavedData = function ()
+    {
+        if (!localStorageSupport) return;
+        localStorage.clear();
+    }
+    that.removeItem = function (key)
+    {
+        if (!localStorageSupport) return;
+        localStorage.removeItem(key);
+    }
+    that.saveData = function (key, value)
+    {
+        if (!localStorageSupport) return;
+        localStorage.setItem(key, value);
+    }
+
+    that.loadData = function (key, type)
+    {
+        switch(type)
+        {
+            case "string": return localStorage.getItem(key);
+            case "int": return parseInt(localStorage.getItem(key));
+            case "float": return parseFloat(localStorage.getItem(key));
+            case "number": return parseFloat(localStorage.getItem(key));
+            case "boolean":
+                if (localStorage.getItem(key) == "true")
+                    return true;
+                else if (localStorage.getItem(key) == "false")
+                    return false;
+        }
+        return null;
+    }
+    
 
 }
 
