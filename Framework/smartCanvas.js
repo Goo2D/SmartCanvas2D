@@ -1263,67 +1263,6 @@ var MyCanvas = new function () //singleton
     }
 
 
-    //SAVE/LOAD 
-    that.itemExist = function (value)
-    {
-        try
-        {
-            if (localStorage.getItem(value) != null)
-                return true;
-            return false;
-        }
-        catch (e) {
-
-        }
-
-    }
-    that.clearSaveData = function ()
-    {
-        try
-        {
-            localStorage.clear();
-        }
-        catch (e)
-        {
-
-        }
-    }
-    that.saveData = function (value, vr)
-    {
-        try
-        {
-            localStorage.setItem(value, vr);
-        }
-        catch (e)
-        {
-            that.showMessage("Save error");
-        }
-    }
-
-    that.loadData = function (type, value)
-    {
-        if (type == "string")
-        {
-            return localStorage.getItem(value);
-        }
-        else if (type == "number")
-        {
-            return parseInt(localStorage.getItem(value));
-        }
-        else if (type == "float")
-        {
-            return parseFloat(localStorage.getItem(value));
-        }
-        else if (type == "boolean")
-        {
-            if (localStorage.getItem(value) == "true")
-                return true;
-            else if (localStorage.getItem(value) == "false")
-                return false;
-        }
-
-    }
-
 }
 
 
