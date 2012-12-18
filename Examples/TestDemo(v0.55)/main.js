@@ -30,13 +30,18 @@ function TestDemo(params)
         //we must initialize both, it's not safe to choose the appropriate input method after checking the running device
         MyCanvas.initMouseAndTouch(true);
 
-        //high level images and texts (HighLevel.js)
-        img = new Image2D("Assets/arrow.png", MyCanvas.width / 2, 300, beginImg); 
+	    //high level images and texts (HighLevel.js)
+        img = new Image2D("Assets/arrow.png", MyCanvas.width / 2, 300, function ()
+        {
+            //after loading
+            img.centerOrigin();
+            img.setScale(0.8);
+        });
         txt = new Text2D("Textures test", MyCanvas.width / 2, 65, 'arial', 30, '#000000', true, 'normal');
         txt.fill = false; txt.strokeValue = 5;
         txt.alpha = 0.8;
         //direct images
-        ghostTexture = MyCanvas.loadTexture("Assets/ghost.png", function () { bgPattern = MyCanvas.getPattern(bgTexture, 'repeat'); }); //the function is a callback after loading
+        ghostTexture = MyCanvas.loadTexture("Assets/ghost.png", function () { bgPattern = MyCanvas.getPattern(bgTexture, 'repeat'); }); 
         bgTexture = MyCanvas.loadTexture("Assets/texture.png", null);
         //audio
         audioTest = MyCanvas.loadAudio("Assets/audio/audioDemo.m4a", true, false);      
@@ -86,13 +91,6 @@ function TestDemo(params)
         }
     }
 
-
-    function beginImg() //calback after img loading (Image2D object)
-    {
-        img.centerOrigin();
-        img.setScale(0.8);
-    }
-
     var update = function()
     {
         //keyboard
@@ -106,10 +104,10 @@ function TestDemo(params)
         }
         if (MyCanvas.isKeyReleased(MyCanvas.Keys.P))
         {
-		    if(!audioTest.paused)
+            if(!audioTest.paused)
                 MyCanvas.stopAudio(audioTest);
-			else
-			    MyCanvas.playAudio(audioTest);
+            else
+                MyCanvas.playAudio(audioTest);
         }
         degrees += degreesSpeed * MyCanvas.elapsedFactor; if (degrees >= 360) degrees -= 360; //elapsedFactor makes the rotation more smooth when a lag occurs
         //mouse or touch down
